@@ -2,7 +2,7 @@
 
 Fast, git-aware, space-conscious, [Powerline](https://github.com/powerline/fonts) prompt.
 
-![Metro](https://user-images.githubusercontent.com/56996/51097858-b6f8a980-180a-11e9-99cb-142a1f13b1c6.png)
+![Metro](https://user-images.githubusercontent.com/56996/51435892-82cb3000-1cc5-11e9-8bba-a91496a7e925.jpg)
 
 ## Installation
 
