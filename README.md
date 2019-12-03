@@ -16,7 +16,10 @@ fisher add fishpkg/fish-prompt-metro
 
 ### Virtual Environment
 
-You can add the following lines to your `fish` configuration file (`~/.config/fish/config.fish`) to cutomize Metro virtual environment:
+Note that you can disable the fish prompt override by adding `set VIRTUAL_ENV_DISABLE_PROMPT disable` to your `fish` configuration file (`~/.config/fish/config.fish`).
+The prompt won't be changed by the `venv/bin/activate.fish` script, so that the theme virtualenv display can be used instead.
+
+Alternatively, you can add the following lines to `config.fish` to customize Metro virtual environment and use the default prompt:
 
 ```fish
 set -g theme_display_ruby no        # Disables displaying the current ruby version
