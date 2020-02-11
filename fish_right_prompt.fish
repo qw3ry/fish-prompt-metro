@@ -1,7 +1,14 @@
 function fish_right_prompt
     set -l status_copy $status
     set -l status_code $status_copy
-    set -l status_color 555
+
+    set -l dark_mode 1 #default to dark mode
+    if functions -q is_dark_mode
+        is_dark_mode; or set -e dark_mode
+    end
+
+    set -l status_color 333; set -lq dark_mode; or set status_color DDD
+
     set -l status_glyph
     set -l duration_glyph
 
@@ -34,6 +41,7 @@ function fish_right_prompt
             set status_glyph ┃
         end
     end
-
-    echo -sn (set_color $status_color) "$status_glyph" (set_color normal)
+    echo -sn (set_color $status_color)
+    set -q fish_right_prompt_show_clock; and echo -sn (date "+%H:%M:%S")" "
+    echo -sn "$status_glyph" (set_color normal)
 end

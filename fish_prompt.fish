@@ -3,7 +3,25 @@ function fish_prompt
     set -l pwd_info (pwd_info "/")
     set -l dir
     set -l base
-    set -l base_color 888 161616
+
+    set -l dark_mode 1 #default to dark mode
+    set -l base_color
+    set -l text_color
+    set -l split_color
+
+    if functions -q is_dark_mode
+        is_dark_mode; or set -e dark_mode
+    end
+    if set -lq dark_mode
+        set base_color BBB 333
+        set text_color FFF
+        # set split_color 000
+    else
+        set base_color 555 DDD
+        set text_color 000
+        # set split_color FFF
+    end
+    set split_color $base_color[2]
 
     if test "$PWD" = ~
         set base "~"
@@ -66,14 +84,14 @@ function fish_prompt
 
         if set -q git_color[3]
             segment "$git_color[3]" "$git_color[4]" "$prompt"
-            segment black black
+            segment $split_color $split_color
             segment "$git_color[1]" "$git_color[2]" " $git_glyph "
         else
             segment "$git_color[1]" "$git_color[2]" "$prompt"
         end
     end
 
-    segment $base_color " $dir"(set_color white)"$base "
+    segment $base_color " $dir"(set_color $text_color)"$base "
 
     if test ! -z "$SSH_CLIENT"
         set -l color bbb 222
