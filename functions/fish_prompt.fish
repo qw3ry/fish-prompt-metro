@@ -64,6 +64,9 @@ function fish_prompt
 
         else if git_is_touched
             set git_color white red
+
+        else if git_has_untracked
+            set git_color white blue
         end
 
         if git_is_detached_head
