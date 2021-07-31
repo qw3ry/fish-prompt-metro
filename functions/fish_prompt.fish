@@ -14,11 +14,11 @@ function fish_prompt
     end
     if set -lq dark_mode
         set base_color BBB 333
-        set text_color FFF
+        set text_color white
         # set split_color 000
     else
         set base_color 555 DDD
-        set text_color 000
+        set text_color black
         # set split_color FFF
     end
     set split_color $base_color[2]
@@ -49,24 +49,24 @@ function fish_prompt
     end
 
     if set branch_name (git_branch_name)
-        set -l git_color black green
+        set -l git_color $text_color green
         set -l git_glyph ""
 
         if git_is_staged
-            set git_color black yellow
+            set git_color $text_color yellow
 
             if git_is_dirty
-                set git_color $git_color white red
+                set git_color $git_color $text_color red
             end
 
         else if git_is_dirty
-            set git_color white red
+            set git_color $text_color red
 
         else if git_is_touched
-            set git_color white red
+            set git_color $text_color red
 
         else if git_has_untracked
-            set git_color white blue
+            set git_color $text_color blue
         end
 
         if git_is_detached_head
