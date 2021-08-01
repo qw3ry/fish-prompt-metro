@@ -1,3 +1,82 @@
+# git helper functions
+# unused
+function __git_is_repo -d "Test if the current directory is a Git repository"
+    if not command git rev-parse --git-dir > /dev/null 2>/dev/null
+        return 1
+    end
+end
+# unused
+function __git_repository_root -d "Get the top level directory of the current git repository"
+    __git_is_repo; and command git rev-parse --show-toplevel
+end
+# unused
+function __git_is_empty -d "Test if a repository is empty"
+    git_is_repo; and test -z (command git rev-list -n 1 --all 2>/dev/null)
+end
+# unused
+function __git_is_tag -d "Test if HEAD is on top of a tag (can be simple, annotated or signed)"
+    __git_is_detached_head; and command git describe --tags --exact-match HEAD 2>/dev/null > /dev/null
+end
+
+function __git_ahead -a ahead behind diverged none
+    command git rev-list --count --left-right "@{upstream}...HEAD" 2>/dev/null | command awk "
+        /^0\t0/         { print \"$none\"       ? \"$none\"     : \"\";     exit 0 }
+        /^[0-9]+\t0/    { print \"$behind\"     ? \"$behind\"   : \"-\";    exit 0 }
+        /^0\t[0-9]+/    { print \"$ahead\"      ? \"$ahead\"    : \"+\";    exit 0 }
+        //              { print \"$diverged\"   ? \"$diverged\" : \"±\";    exit 0 }
+    "
+end
+
+function __git_branch_name -d "Get the name of the current Git branch, tag or sha1"
+    set -l branch_name (command git symbolic-ref --short HEAD 2>/dev/null)
+
+    if test -z "$branch_name"
+        set -l tag_name (command git describe --tags --exact-match HEAD 2>/dev/null)
+
+        if test -z "$tag_name"
+            command git rev-parse --short HEAD 2>/dev/null
+        else
+            printf "%s\n" "$tag_name"
+        end
+    else
+        printf "%s\n" "$branch_name"
+    end
+end
+
+function __git_is_staged -d "Test if there are changes staged for commit"
+    not command git diff --cached --no-ext-diff --quiet --exit-code 2>/dev/null
+end
+
+function __git_is_dirty -d "Test if there are changes not staged for commit"
+    not command git diff --no-ext-diff --quiet --exit-code 2>/dev/null
+end
+
+function __git_untracked_files -d "Get the number of untracked files in a repository"
+    git_is_repo; and command git ls-files --others --exclude-standard | command awk '
+        BEGIN { n = 0 }
+        { n++ }
+        END {
+            print n
+            exit !n
+        }'
+end
+
+function __git_has_untracked -d "Test if there are any untracked files in the working tree"
+    test "0" != (__git_untracked_files)
+end
+function __git_is_detached_head -d "Test if the repository is in a detached HEAD state"
+    not command git symbolic-ref HEAD 2>/dev/null > /dev/null
+end
+function __git_is_stashed -d "Test if there are changes in the Git stash"
+    command git rev-parse --verify --quiet refs/stash > /dev/null 2>/dev/null
+end
+function __git_is_touched -d "Test if there are any changes in the working tree"
+    __git_is_staged; or __git_is_dirty
+end
+
+################################################################33
+# prompt function
+################################################################33
 function fish_prompt
     set -l status_copy $status
     set -l pwd_info (pwd_info "/")
@@ -48,38 +127,38 @@ function fish_prompt
         segment $base_color " $pwd_info[3] "
     end
 
-    if set branch_name (git_branch_name)
+    if set branch_name (__git_branch_name)
         set -l git_color $text_color green
         set -l git_glyph ""
 
-        if git_is_staged
+        if __git_is_staged
             set git_color $text_color yellow
 
-            if git_is_dirty
+            if __git_is_dirty
                 set git_color $git_color $text_color red
             end
 
-        else if git_is_dirty
+        else if __git_is_dirty
             set git_color $text_color red
 
-        else if git_is_touched
+        else if __git_is_touched
             set git_color $text_color red
 
-        else if git_has_untracked
+        else if __git_has_untracked
             set git_color $text_color blue
         end
 
-        if git_is_detached_head
+        if __git_is_detached_head
             set git_glyph "➤"
 
-        else if git_is_stashed
+        else if __git_is_stashed
             set git_glyph "╍╍"
         end
 
         set -l prompt
-        set -l git_ahead (git_ahead "+ " "- " "+- ")
+        set -l git_ahead (__git_ahead "+ " "- " "+- ")
 
-        if test "$branch_name" = master
+        if test "$branch_name" = master -o "$branch_name" = main
             set prompt " $git_glyph $git_ahead"
         else
             set prompt " $git_glyph $branch_name $git_ahead"
