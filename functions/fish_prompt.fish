@@ -7,7 +7,7 @@ function __git_is_repo -d "Test if the current directory is a Git repository"
 end
 # unused
 function __git_repository_root -d "Get the top level directory of the current git repository"
-    __git_is_repo; and command git rev-parse --show-toplevel
+    command git rev-parse --show-toplevel
 end
 # unused
 function __git_is_empty -d "Test if a repository is empty"
@@ -51,14 +51,23 @@ function __git_is_dirty -d "Test if there are changes not staged for commit"
     not command git diff --no-ext-diff --quiet --exit-code 2>/dev/null
 end
 
-function __git_untracked_files -d "Get the number of untracked files in a repository"
-    git_is_repo; and command git ls-files --others --exclude-standard | command awk '
+function __count_files
+    command awk '
         BEGIN { n = 0 }
         { n++ }
         END {
             print n
             exit !n
         }'
+end
+
+# function __git_dirty_files -d "Get the number of modified files"
+#     pushd (__git_repository_root)
+#     command git ls-files --modified --exclude-standard | __count_files
+#     popd
+# end
+function __git_untracked_files -d "Get the number of untracked files in a repository"
+    command git ls-files --others --directory --exclude-standard | __count_files
 end
 
 function __git_has_untracked -d "Test if there are any untracked files in the working tree"
@@ -128,49 +137,57 @@ function fish_prompt
     end
 
     if set branch_name (__git_branch_name)
-        set -l git_color $text_color green
-        set -l git_glyph ""
 
+        if __git_is_stashed
+            segment "$text_color" blue "♺" # "╍╍"
+        end
+        # set -l untracked_files (__git_untracked_files)
+        # if test "0" != "$untracked_files"
+            # segment "$text_color" blue "$untracked_files?" #﹖"
+        if __git_has_untracked
+            segment "$text_color" blue "?" #﹖"
+        end
+        # set -l dirty_files (__git_dirty_files)
+        # if test "0" != "$dirty_files"
+        #     segment "$text_color" red "$dirty_files╍"
+        if __git_is_dirty
+            segment "$text_color" red "⁝" # " ╍"
+        end
+        # set -l staged_files (__git_staged_files)
+        # if test "0" != "$staged_files"
         if __git_is_staged
-            set git_color $text_color yellow
-
-            if __git_is_dirty
-                set git_color $git_color $text_color red
-            end
-
-        else if __git_is_dirty
-            set git_color $text_color red
-
-        else if __git_is_touched
-            set git_color $text_color red
-
-        else if __git_has_untracked
-            set git_color $text_color blue
+            segment "$text_color" yellow "🮸 " #"🮶"
         end
 
+        set -l git_color "$split_color" "$text_color"
+        set -l git_glyph ""
         if __git_is_detached_head
             set git_glyph "➤"
-
-        else if __git_is_stashed
-            set git_glyph "╍╍"
+            if __git_is_tag
+                set git_glyph "🏷"
+            end
         end
 
         set -l prompt
-        set -l git_ahead (__git_ahead "+ " "- " "+- ")
-
+        # set -l git_ahead (__git_ahead "🠕 " "🠗 " "⤲ ")
+        set -l git_ahead (__git_ahead)
+        if test -z "$git_ahead"
+        else if test "+" = "$git_ahead"
+            set git_ahead "🠕"
+            set git_color $text_color green
+        else if test "-" = "$git_ahead"
+            set git_ahead "🠗"
+            set git_color $text_color yellow
+        else
+            set git_ahead "⤲"
+            set git_color $text_color red
+        end
         if test "$branch_name" = master -o "$branch_name" = main
             set prompt " $git_glyph $git_ahead"
         else
             set prompt " $git_glyph $branch_name $git_ahead"
         end
-
-        if set -q git_color[3]
-            segment "$git_color[3]" "$git_color[4]" "$prompt"
-            segment $split_color $split_color
-            segment "$git_color[1]" "$git_color[2]" " $git_glyph "
-        else
-            segment "$git_color[1]" "$git_color[2]" "$prompt"
-        end
+        segment "$git_color[1]" "$git_color[2]" "$prompt"
     end
 
     segment $base_color " $dir"(set_color $text_color)"$base "
