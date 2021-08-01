@@ -98,15 +98,19 @@ function fish_prompt
     set -l split_color
 
     if functions -q is_dark_mode
-        is_dark_mode; or set -e dark_mode
+        is_dark_mode; or set dark_mode 0
     end
-    if set -lq dark_mode
+
+    if test "1" = "$dark_mode"
         set base_color BBB 333
         set text_color white
+        set -q fish_prompt_invert_colors; and set base_color 333 BBB; and set text_color 000
+
         # set split_color 000
     else
         set base_color 555 DDD
         set text_color black
+        set -q fish_prompt_invert_colors; and set base_color DDD 555; and set text_color FFF
         # set split_color FFF
     end
     set split_color $base_color[2]
