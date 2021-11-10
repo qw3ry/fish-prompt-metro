@@ -9,7 +9,7 @@ Fast, git-aware, space-conscious, [Powerline](https://github.com/powerline/fonts
 With [Fisher](https://github.com/jorgebucaran/fisher)
 
 ```fish
-fisher add fishpkg/fish-prompt-metro
+fisher add lowne/fish-prompt-metro
 ```
 
 ## Configuration
